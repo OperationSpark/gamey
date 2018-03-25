@@ -1,0 +1,28 @@
+{
+  "name": "gamey",
+  "main": "index.js",
+  "authors": [
+    "John Fraboni <johnfraboni@hotmail.com>"
+  ],
+  "description": "A CreateJS stateful game controller",
+  "keywords": [
+    "CreateJS"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "EaselJS": "^1.0.2",
+    "javascript-state-machine": "^3.0.1",
+    "messenjah": "^1.0.0"
+  },
+  "devDependencies": {
+    "opspark-draw": "^1.0.0"
+  }
+}
