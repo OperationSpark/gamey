@@ -1,3 +1,10 @@
+/*
+ * NOTE: these tests are stateful: can't get beforeEach / afterEach to work!
+ * If needed, to reset state at the end of each test, call:
+ *    clearHandlers();
+ *    app.end();
+ */
+
 const
   expect = window.chai.expect,
   createjs = window.createjs,
@@ -18,15 +25,20 @@ describe('gamey', function () {
         'canvas',
         'stage',
         'view',
+        
+        'setState',
+        'getStateName',
+        
+        'init',
         'play',
         'pause',
-        'quit',
-        'unpause',
         'end',
+        
         'addUpdateable',
         'removeUpdateable',
         'getNumberUpdateables',
         'update',
+        
         'on',
         'once',
         'off',
@@ -52,106 +64,116 @@ describe('gamey', function () {
       app.addUpdateable(updateable);
       
       expect(app.getNumberUpdateables()).to.equal(1);
-      
     });
   });
   
-  describe('play', function () {
-    it('should transition from lobby state to playing state', function () {
-      app.on('stateChange', event => {
+  describe('lobby', function () {
+    console.log('describe lobby');
+    expect(app.getStateName()).to.equal('lobby');
+    it('should transition from lobby to initializing state', function () {
+      app.once('stateChange', event => {
         expect(event).to.be.an('object');
         expect(event.from).to.equal('lobby');
-        expect(event.to).to.equal('playing');
+        expect(event.to).to.equal('initializing');
       });
-      app.play();
-      
+      app.init();
       app.clearHandlers();
-      app.end();
+      // app.end();
     });
   });
   
-  describe('pause', function () {
-    it('should transition from playing state to paused state', function () {
-      app.play();
-      app.on('stateChange', event => {
-        expect(event.from).to.equal('playing');
-        expect(event.to).to.equal('paused');
-      });
-      app.pause();
+  // describe('play', function () {
+  //   it('should transition from lobby state to playing state', function () {
       
-      app.clearHandlers();
-      app.end();
-    });
-  });
-  
-  describe('unpause', function () {
-    it('should transition from paused state to playing state', function () {
-      app.play();
-      app.pause();
-      app.on('stateChange', event => {
-        expect(event.from).to.equal('paused');
-        expect(event.to).to.equal('playing');
-      });
-      app.unpause();
+  //     app.play();
       
-      app.clearHandlers();
-      app.end();
-    });
-  });
+  //     app.clearHandlers();
+  //     app.end();
+  //   });
+  // });
   
-  describe('quit', function () {
-    it('should transition from paused state to playing state', function () {
-      app.play();
-      app.pause();
-      app.on('stateChange', event => {
-        expect(event.from).to.equal('paused');
-        expect(event.to).to.equal('lobby');
-      });
-      app.quit();
+  // describe('pause', function () {
+  //   it('should transition from playing state to paused state', function () {
+  //     app.play();
+  //     app.on('stateChange', event => {
+  //       expect(event.from).to.equal('playing');
+  //       expect(event.to).to.equal('paused');
+  //     });
+  //     app.pause();
       
-      app.clearHandlers();
-    });
-  });
+  //     app.clearHandlers();
+  //     app.end();
+  //   });
+  // });
   
-  describe('end', function () {
-    it('should transition from paused state to playing state', function () {
-      app.play();
-      app.on('stateChange', event => {
-        expect(event.from).to.equal('playing');
-        expect(event.to).to.equal('lobby');
-      });
-      app.end();
+  // describe('unpause', function () {
+  //   it('should transition from paused state to playing state', function () {
+  //     app.play();
+  //     app.pause();
+  //     app.on('stateChange', event => {
+  //       expect(event.from).to.equal('paused');
+  //       expect(event.to).to.equal('playing');
+  //     });
+  //     app.unpause();
       
-      app.clearHandlers();
-    });
-  });
+  //     app.clearHandlers();
+  //     app.end();
+  //   });
+  // });
   
-  
-  
-  describe('pause with updateables', function () {
-    it('should shut down updateables on pause', function (done) {
-      const asset = draw.circle(20, "#CCC");
-      asset.y = 60;
-      const
-        updateable = {
-          asset: asset,
-          update() {
-            ++asset.x;
-            if(asset.x - asset.radius > app.canvas.width) asset.x = -asset.radius;
-          }
-        };
-      app.view.addChild(updateable.asset);
-      app.addUpdateable(updateable);
-      app.play();
+  // describe('quit', function () {
+  //   it('should transition from paused state to playing state', function () {
+  //     app.play();
+  //     app.pause();
+  //     app.on('stateChange', event => {
+  //       expect(event.from).to.equal('paused');
+  //       expect(event.to).to.equal('lobby');
+  //     });
+  //     app.quit();
       
-      setTimeout(function() { 
-        app.pause();
+  //     app.clearHandlers();
+  //   });
+  // });
+  
+  // describe('end', function () {
+  //   it('should transition from paused state to playing state', function () {
+  //     app.play();
+  //     app.on('stateChange', event => {
+  //       expect(event.from).to.equal('playing');
+  //       expect(event.to).to.equal('lobby');
+  //     });
+  //     app.end();
+      
+  //     app.clearHandlers();
+  //   });
+  // });
+  
+  
+  
+  // describe('pause with updateables', function () {
+  //   it('should shut down updateables on pause', function (done) {
+  //     const asset = draw.circle(20, "#CCC");
+  //     asset.y = 60;
+  //     const
+  //       updateable = {
+  //         asset: asset,
+  //         update() {
+  //           ++asset.x;
+  //           if(asset.x - asset.radius > app.canvas.width) asset.x = -asset.radius;
+  //         }
+  //       };
+  //     app.view.addChild(updateable.asset);
+  //     app.addUpdateable(updateable);
+  //     app.play();
+      
+  //     setTimeout(function() { 
+  //       app.pause();
         
-        app.clearHandlers();
-        app.end();
+  //       app.clearHandlers();
+  //       app.end();
         
-        done();
-      }, 1900)
-    });
-  });
+  //       done();
+  //     }, 1900)
+  //   });
+  // });
 });
