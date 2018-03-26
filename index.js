@@ -50,7 +50,7 @@
     
     /**
      * A factory to create a state. An object oriented approach, each
-     * state has the same API, behaviour overridden per state.
+     * state has the same API, but behaviour is overridden per state.
      */
     function makeState(name) {
       return {
@@ -59,6 +59,7 @@
          * state cannot transition to another, the transition method
          * should be overridden with doNothing, a dummy Function.
          */
+        lobby: doNothing,
         init: doNothing,
         play: doNothing,
         pause: doNothing,
@@ -81,36 +82,71 @@
     
     const states = {
       lobby: Object.assign(makeState('lobby'), {
+        enter(fromState) {
+          console.log('enter lobby...');
+          messenjah.dispatch(new StateChangeEvent(fromState.getName(), states.lobby.getName(), app));
+        },
         init() {
+          console.log('lobby state calling init()...');
           setState(states.initializing);
         },
       }),
+      
       initializing: Object.assign(makeState('initializing'), {
         enter(fromState) {
-          console.log('entering initializing');
+          console.log('enter initializing...');
           // let any interested objects know it's time to initialize //
           messenjah.dispatch(new StateChangeEvent(fromState.getName(), states.initializing.getName(), app));
         },
+        play() {
+          console.log('initializing state calling play()...');
+          setState(states.playing);
+        },
       }),
+      
       playing: Object.assign(makeState('playing'), {
         enter(fromState) {
+          console.log('enter playing...');
           tickerHandler = createjs.Ticker.on('tick', app.update);
-          messenjah.dispatch(new StateChangeEvent(fromState.getName(), 'playing', app));
+          messenjah.dispatch(new StateChangeEvent(fromState.getName(), states.playing.getName(), app));
         },
         pause() {
+          console.log('playing state calling pause()...');
           setState(states.paused);
         },
+        end() {
+          console.log('play state calling end()...');
+          setState(states.end);
+        },
       }),
+      
       paused: Object.assign(makeState('paused'), {
         enter(fromState) {
+          console.log('enter paused...');
           createjs.Ticker.off('tick', tickerHandler);
           messenjah.dispatch(new StateChangeEvent(fromState.getName(), 'paused', app));
         },
         play() {
+          console.log('paused state calling play()...');
           setState(states.playing);
         },
+        end() {
+          console.log('paused state calling end()...');
+          setState(states.end);
+        },
       }),
-      over: makeState('over'),
+      
+      end: Object.assign(makeState('end'), {
+        enter(fromState) {
+          console.log('enter end...');
+          createjs.Ticker.off('tick', tickerHandler);
+          messenjah.dispatch(new StateChangeEvent(fromState.getName(), 'end', app));
+        },
+        lobby() {
+          console.log('end state calling lobby()...');
+          setState(states.lobby);
+        },
+      }),
     };
     
     // set the incept state for the game //
@@ -146,8 +182,9 @@
         view: new createjs.Container(),
 
         setState: setState,
-        getStateName() { return _state.getName(); },
+        getStateName() { console.log(_state.getName()); return _state.getName(); },
         
+        lobby() { _state.lobby(); },
         init() { _state.init(); },
         play() { _state.play(); },
         pause() { _state.pause(); },
