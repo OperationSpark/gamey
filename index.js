@@ -233,7 +233,6 @@
 
     app.stage.addChild(app.view);
     createjs.Ticker.framerate = 60;
-    // createjs.Ticker.on('tick', app.update);
 
     // createjs.Touch.enable(_canvas, true, false);
 
