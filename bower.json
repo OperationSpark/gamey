@@ -1,6 +1,6 @@
 {
   "name": "gamey",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "index.js",
   "authors": [
     "John Fraboni <johnfraboni@hotmail.com>"
@@ -23,6 +23,7 @@
     "lodash": "^4.17.5"
   },
   "devDependencies": {
-    "opspark-draw": "^1.0.0"
+    "opspark-draw": "^1.0.0",
+    "TweenJS": "^1.0.2"
   }
 }
