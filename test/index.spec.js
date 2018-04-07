@@ -12,22 +12,43 @@ const
   draw = opspark.draw,
   gamey = opspark.gamey;
 
-const app = gamey.make();
-
-// textfield(text, sizeAndFont, color, align, baseline, x, y)
-const textfield = draw.textfield(`STATE: ${app.getStateName().toUpperCase()}`, 'bold 36px Arial', '#CCC', 'left');
-textfield.x = 60;
-textfield.y = 15;
-app.view.addChild(textfield);
-
-function updateTextfield(text) {
-    textfield.text = text;
-    app.stage.update();
-  }
+/*
+ * gamey() must take a map of factories containing a factory 
+ * Function for a view and manager per main app feature.
+ */
+const app = gamey.app({
+      // used to hold view factories for the concrete game //
+      factories: {
+        lobby: {
+          manager: opspark.gamey.manager,
+          view: opspark.gamey.view,
+        },
+        initializing: {
+          manager: opspark.gamey.manager,
+          view: opspark.gamey.view,
+        },
+        // NOTE: concrete view/manager for playing feature in tests //
+        playing: {
+          manager: opspark.gamey.playingManager,
+          view: opspark.gamey.playing,
+        },
+        paused: {
+          manager: opspark.gamey.manager,
+          view: opspark.gamey.view,
+        },
+        end: {
+          manager: opspark.gamey.manager,
+          view: opspark.gamey.view,
+        }
+      },
+      // used by gamey to hold references to instances of managers //
+      managers: {
+      },
+    });
 
 describe('gamey', function () {
   
-  describe('make', function () {
+  describe('gamey', function () {
     it('should return an Object', function () {
       expect(app).to.be.an('object');
     });
@@ -35,13 +56,14 @@ describe('gamey', function () {
       expect(app).to.have.keys(
         'canvas',
         'stage',
+        
         'view',
+        'hud',
         
         'setState',
         'getStateName',
         
         'lobby',
-        'init',
         'play',
         'pause',
         'end',
@@ -51,198 +73,198 @@ describe('gamey', function () {
         'getNumberUpdateables',
         'update',
         
-        'on',
-        'once',
-        'off',
-        'has',
-        'dispatch',
-        'clearHandlers');
+        'setDebug',
+        'getDebug');
     });
   });
   
-  describe('addUpdateable', function () {
-    it('should add an object with an update function to the app', function () {
-      const asset = draw.circle(10, "#CCC");
-      asset.y = asset.radius;
-      const
-        updateable = {
-          asset: asset,
-          update() {
-            ++asset.x;
-            if(asset.x - asset.radius > app.canvas.width) asset.x = -asset.radius;
-          }
-        };
-      app.view.addChild(updateable.asset);
-      app.addUpdateable(updateable);
+  // describe('addUpdateable', function () {
+  //   it('should add an object with an update function to the app', function () {
+  //     const asset = draw.circle(10, "#CCC");
+  //     asset.y = asset.radius;
+  //     const
+  //       updateable = {
+  //         asset: asset,
+  //         update() {
+  //           ++asset.x;
+  //           if(asset.x - asset.radius > app.canvas.width) asset.x = -asset.radius;
+  //         }
+  //       };
+  //     app.view.addChild(updateable.asset);
+  //     app.addUpdateable(updateable);
       
-      expect(app.getNumberUpdateables()).to.equal(1);
-    });
-  });
+  //     expect(app.getNumberUpdateables()).to.equal(1);
+  //   });
+  // });
   
-  // leaves app in initializing state //
-  describe('lobby -> initializing', function () {
-    console.log('describe lobby');
-    expect(app.getStateName()).to.equal('lobby');
-    it('should transition from lobby to initializing state and dispatch appropriate stateChange event', function () {
-      app.once('stateChange', event => {
-        expect(event).to.be.an('object');
-        expect(event.from).to.equal('lobby');
-        expect(event.to).to.equal('initializing');
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-      });
-      app.init();
-      app.clearHandlers();
+  // leaves app in lobby state //
+  describe('incept -> lobby', function () {
+    it('should transition from incept to lobby state', function (done) {
+      expect(app.getStateName()).to.equal('incept');
+      
+      /*
+       * Each transition method can take a data object, which will be passed
+       * to the manager's factory method on its creation. This allows for 
+       * flexible views, etc. In this case, we pass {name: 'lobby'}, which 
+       * allows a general manager to set this text on a general view.
+       */
+      app.lobby({name: 'lobby'})
+        .then(() => {
+          expect(app.getStateName()).to.equal('lobby');
+          done();
+        });
     });
   });
   
   // leaves app in playing state //
-  describe('initializing -> play', function () {
-    it('should transition from initializing to playing state and dispatch appropriate stateChange event', function () {
-      expect(app.getStateName()).to.equal('initializing');
-      app.once('stateChange', event => {
-        expect(event).to.be.an('object');
-        expect(event.from).to.equal('initializing');
-        expect(event.to).to.equal('playing');
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-      });
-      app.play();
-      app.clearHandlers();
+  describe('lobby -> initializing -> playing', function () {
+    it('should transition from lobby to initializing state then playing state', function (done) {
+      expect(app.getStateName()).to.equal('lobby');
+      // will transition first to the initializing state //
+      app.play({name: 'initializing'}) 
+        .then(() => {
+          expect(app.getStateName()).to.equal('playing');
+          done();
+        });
     });
   });
   
   // toggles app between playing and paused states, leaves app in playing state //
   describe('play -> pause -> play', function () {
-    it('should transition from playing state to paused state and dispatch appropriate stateChange event', function (done) {
+    it('should transition from playing state to paused state', function (done) {
       expect(app.getStateName()).to.equal('playing');
-      app.once('stateChange', event => {
-        expect(event.from).to.equal('playing');
-        expect(event.to).to.equal('paused');
-      });
+      
       setTimeout(() => {
-        app.pause(); 
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-      }, 500);
-      setTimeout(() => { 
+        app.pause({name: 'paused'})
+        .then(() => {
+          expect(app.getStateName()).to.equal('paused');
+        });
+      }, 200);
+      setTimeout(() => {
+        /*
+         * NOTE: we're not passing data to the play() transition method.
+         * In these tests, there's a concrete playing view and manager.
+         */
         app.play()
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-      }, 1000);
+        .then(() => {
+          expect(app.getStateName()).to.equal('playing');
+        });
+      }, 1300);
       setTimeout(() => { 
-        app.pause()
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
+        app.pause({name: 'paused'})
+        .then(() => {
+          expect(app.getStateName()).to.equal('paused');
+        });
       }, 1500);
       setTimeout(() => { 
-        app.play(); 
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-        done();
+        app.play()
+        .then(() => {
+          expect(app.getStateName()).to.equal('playing');
+          done();
+        });
       }, 1900);
-      app.clearHandlers();
     });
   });
   
   // leaves app in end state //
   describe('pause -> end', function () {
-    it('should transition from paused state to end state', function () {
+    it('should transition from paused state to end state', function (done) {
       expect(app.getStateName()).to.equal('playing');
-      app.pause();
-      app.once('stateChange', event => {
-        expect(event.from).to.equal('paused');
-        expect(event.to).to.equal('end');
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-      });
-      app.end();
-      app.clearHandlers();
+      app.pause({name: 'paused'})
+        .then(() => expect(app.getStateName()).to.equal('paused'))
+        .then(() => app.end({name: 'end'}))
+        .then(() => expect(app.getStateName()).to.equal('end'))
+        .then(() => done());
     });
   });
   
-  // leaves app in lobby state //
+  // // leaves app in lobby state //
   describe('end -> lobby', function () {
-    it('should transition from end state to lobby state', function () {
+    it('should transition from end state to lobby state', function (done) {
       expect(app.getStateName()).to.equal('end');
-      app.pause();
-      app.once('stateChange', event => {
-        expect(event.from).to.equal('end');
-        expect(event.to).to.equal('lobby');
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-      });
-      app.lobby();
-      app.clearHandlers();
+      app.lobby({name: 'lobby'})
+        .then(() => {
+          expect(app.getStateName()).to.equal('lobby');
+          done();
+        });
     });
   });
   
   // leaves app in end state //
-  describe('end -> lobby', function () {
-    it('should transition from paused state to end state', function (done) {
+  describe('playing -> end -> initializing -> playing -> end', function () {
+    it('should transition from playing to end state, and end through initializing to playing states', function (done) {
       expect(app.getStateName()).to.equal('lobby');
       setTimeout(() => {
-        app.init();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
+        app.play({name: 'initializing'})
+        .then(() => {
+          expect(app.getStateName()).to.equal('playing');
+        });
       }, 500);
       setTimeout(() => {
-        app.play();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
+        app.end({name: 'end'})
+          .then(() => expect(app.getStateName()).to.equal('end'));
       }, 1000);
       setTimeout(() => {
-        app.once('stateChange', event => {
-          expect(event.from).to.equal('playing');
-          expect(event.to).to.equal('end');
-          updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
+        app.play({name: 'initializing'})
+        .then(() => {
+          expect(app.getStateName()).to.equal('playing');
         });
-        app.end();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-        done();
       }, 1500);
+      setTimeout(() => {
+        app.end({name: 'end'})
+          .then(() => expect(app.getStateName()).to.equal('end'))
+          .then(() => done());
+      }, 1900);
     });
   });
+  
+  
   
   // leaves app in lobby state //
   describe('lobby do nothings', function () {
     it('should not transition to play, pause or end states', function (done) {
       expect(app.getStateName()).to.equal('end');
       setTimeout(() => {
-        app.lobby();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-        
-        app.play();
-        app.pause();
-        app.end();
-        
-        expect(app.getStateName()).to.equal('lobby');
-        done();
+        app.lobby({name: 'lobby'})
+          .then(() => expect(app.getStateName()).to.equal('lobby'))
+          .then(() => app.pause())
+          .then(() => app.end())
+          .then(() => expect(app.getStateName()).to.equal('lobby'))
+          .then(() => done());
       }, 500);
     });
   });
   
-  // leaves app in initializing state //
-  describe('initializing do nothings', function () {
-    it('should not transition to lobby, pause or end states', function (done) {
-      expect(app.getStateName()).to.equal('lobby');
-      setTimeout(() => {
-        app.init();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
+  // TODO: we can only run this test of init takes a degree of async time //
+  // // leaves app in initializing state //
+  // describe('initializing do nothings', function () {
+  //   it('should not transition to lobby, pause or end states', function (done) {
+  //     expect(app.getStateName()).to.equal('lobby');
+  //     setTimeout(() => {
+  //       app.init();
+  //       updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
         
-        app.lobby();
-        app.pause();
-        app.end();
+  //       app.lobby();
+  //       app.pause();
+  //       app.end();
         
-        expect(app.getStateName()).to.equal('initializing');
-        done();
-      }, 500);
-    });
-  });
+  //       expect(app.getStateName()).to.equal('initializing');
+  //       done();
+  //     }, 500);
+  //   });
+  // });
   
   // leaves app in playing state //
   describe('playing do nothings', function () {
-    it('should not transition to lobby or initializing states', function (done) {
-      expect(app.getStateName()).to.equal('initializing');
+    it('should not transition to lobby, playing, or initializing states', function (done) {
+      expect(app.getStateName()).to.equal('lobby');
       setTimeout(() => {
-        app.play();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-        
-        app.lobby();
-        app.init();
-        
-        expect(app.getStateName()).to.equal('playing');
-        done();
+        app.play()
+          .then(() => expect(app.getStateName()).to.equal('playing'))
+          .then(() => app.lobby())
+          .then(() => app.play())
+          .then(() => expect(app.getStateName()).to.equal('playing'))
+          .then(() => done());
       }, 500);
     });
   });
@@ -252,32 +274,25 @@ describe('gamey', function () {
     it('should not transition to lobby or initializing states', function (done) {
       expect(app.getStateName()).to.equal('playing');
       setTimeout(() => {
-        app.pause();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-        
-        app.lobby();
-        app.init();
-        
-        expect(app.getStateName()).to.equal('paused');
-        done();
+        app.pause({name: 'paused'})
+          .then(() => expect(app.getStateName()).to.equal('paused'))
+          .then(() => app.lobby())
+          .then(() => expect(app.getStateName()).to.equal('paused'))
+          .then(() => done());
       }, 500);
     });
   });
   
   // leaves app in end state //
   describe('end do nothings', function () {
-    it('should not transition to initializing, playing or paused states', function (done) {
+    it('should not transition to paused state', function (done) {
       expect(app.getStateName()).to.equal('paused');
       setTimeout(() => {
-        app.end();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-        
-        app.init();
-        app.play();
-        app.pause();
-        
-        expect(app.getStateName()).to.equal('end');
-        done();
+        app.end({name: 'end'})
+          .then(() => expect(app.getStateName()).to.equal('end'))
+          .then(() => app.pause())
+          .then(() => expect(app.getStateName()).to.equal('end'))
+          .then(() => done());
       }, 500);
     });
   });
@@ -287,21 +302,18 @@ describe('gamey', function () {
     it('should be fun', function (done) {
       expect(app.getStateName()).to.equal('end');
       setTimeout(() => {
-        app.lobby();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
+        app.lobby({name: 'lobby'})
+          .then(() => app.play({name: 'initializing'}))
+          .then(() => expect(app.getStateName()).to.equal('playing'))
+          .then(() => console.log(app.getNumberUpdateables()))
+          /*
+           * NOTE: this assertion is stateful, for these tests, 
+           * the playing view should add only one updateable.
+           */
+          .then(() => expect(app.getNumberUpdateables()).to.equal(1))
+          .then(() => done());
       }, 500);
-      setTimeout(() => {
-        app.init();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-      }, 1000);
-      setTimeout(() => {
-        app.play();
-        updateTextfield(`STATE: ${app.getStateName().toUpperCase()}`);
-        done();
-      }, 1500);
     });
   });
   
-  
-
 });

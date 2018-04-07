@@ -20,7 +20,7 @@
   ],
   "dependencies": {
     "EaselJS": "^1.0.2",
-    "messenjah": "^1.0.0"
+    "lodash": "^4.17.5"
   },
   "devDependencies": {
     "opspark-draw": "^1.0.0"
