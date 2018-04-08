@@ -54,6 +54,8 @@ Include these view and mediator files in the `<head>` or `<body>` tag of your `i
 
 ```
 
+### Configuring and Creating the Gamey App
+
 When your app launches, in some initializing JavaScript, create an IOC map to hold references to the game feature factory Functions, using their namespaces. Then, to create the gamey app, you can call `window.opspark.gamey(map);`. This will return the instance of the gamey API.
 
 The gamey API exposes the transition methods for each state of the game, `lobby(data);`, `play(data);`, `pause(data);`, and `end(data);`. You can optionally pass a data Object to any of these transition methods; the data Object will be passed to the factory that creates the mediator for the feature. By this, view and mediator construction can be more contextual and flexible.
