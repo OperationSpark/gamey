@@ -136,9 +136,13 @@
            * Let the initializing state call its play() method to
            * automatically transition to the playing state once
            * the initManager is done with its enter sequence.
+           *
+           * NOTE: The initializing-mediator can resolve with a data Object, 
+           * ie, initialized game assets or data, and it will be passed as 
+           * the data Object to the factory of the playing-mediator.
            */
           return createAndRunEnterForMediator(app, this.map, 'initializing', data)
-            .then(() => this.play(data));
+            .then((initializedData) => this.play(initializedData));
         },
         play(data) {
           if(_debug) console.log('initializing state calling play()...');
