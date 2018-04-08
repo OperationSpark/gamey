@@ -60,7 +60,7 @@ When your app launches, in some initializing JavaScript, create an IOC map to ho
 
 The gamey API exposes the transition methods for each state of the game, `lobby(data);`, `play(data);`, `pause(data);`, and `end(data);`. You can optionally pass a data Object to any of these transition methods; the data Object will be passed to the factory that creates the mediator for the feature. By this, view and mediator construction can be more contextual and flexible.
 
-Note that the `initializing` state has no direct transition method; it is passed through from `lobby` to `playing`. The `initializing` state can be used for preloading assets, sound, or connecting to a server.
+Note that the `initializing` state has no direct transition method; it is passed through from `lobby` to `playing`, whenever the `lobby-mediator` calls `game.play()`. The `initializing` state can be used for preloading assets, sound, or connecting to a server.
 
 Mediators expose a set of methods; see the example, below. Two of those methods, `enter()` and `exit()` are important in signaling the gamey state machine as to when it's time to move on. These two methods must return a `Promise`, and each should `resolve()` its `Promise` when any entry or exit async operations, including animation or network calls, are complete.
 
