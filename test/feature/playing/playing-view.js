@@ -19,6 +19,10 @@
       const
         textfield = draw.textfield('INCEPT', 'bold 60px Arial', '#CCC', ),
         circle = draw.circle(10, "#CCC");
+        
+      // add all view components to the view container //
+      asset.addChild(textfield, circle);
+      
       
       /**
        * Called when the asset is added to the stage.
@@ -29,8 +33,11 @@
         textfield.y = 60;
         
         circle.y = textfield.y + textfield.getBounds().height + circle.radius + 10;
-        
-        asset.addChild(textfield, circle);
+      }
+      
+      // called on screen resize //
+      function liquify() {
+        // If necessary, tween components into position relative to canvas here //
       }
 
       // setup a one-time added-to-parent listener //
@@ -47,12 +54,14 @@
       }
 
       /*
-       * Return the view API: It must expose asset its
-       * property, but you can expose any other child
-       * componets or API needed to control this view.
+       * Return the view API: It MUST expose the asset, the render method, and 
+       * the liquify method. However, any other child components or API needed 
+       * to control this view can be exposed.
        */
       return {
         asset,
+        render,
+        liquify,
         circle,
         setText,
         startTextTween() {

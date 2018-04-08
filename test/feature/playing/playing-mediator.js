@@ -1,8 +1,8 @@
 (function(opspark, _) {
-  // create a namespace for the playingManager //
-  _.set(opspark, 'gamey.playingManager',
+  // create a namespace for the playingMediator //
+  _.set(opspark, 'gamey.playingMediator',
     /**
-     * Creates and returns the playing manager.
+     * Creates and returns the playing mediator.
      */
     function(view, game, data) {
       const
@@ -17,13 +17,18 @@
         };
 
       /*
-       * Return the manager API: Each manager must expose its view,
-       * a destroy() method used to clean up any references, and 
+       * Return the mediator API: Each mediator must expose its view,
+       * a liquify() method used for repositioning components on screen 
+       * resize, a destroy() method used to clean up any references, and 
        * methods enter(), exit(), which must return a Promise that 
        * resolves when the enter or exit sequence is complete.
        */
       return {
         view,
+        liquify() {
+          // delegate liquify to the view, or implement your own //
+          return view.liquify();
+        },
         enter() {
           return new Promise(function(resolve, reject) {
             view.setText('playing');
@@ -40,7 +45,7 @@
           return new Promise(function(resolve, reject) {
             view.stopTextTween();
             
-            // add an updateable object to the game //
+            // remove the updateable object from the game //
             game.removeUpdateable(updateable);
             
             resolve();

@@ -65,18 +65,16 @@
         end: doNothing,
         
         /*
-         * Called from with setState, onExit is called on the current state.
-         * Here we provide an implementation that most states will share. This
-         * means that most states might implement a factory for a manager that
-         * exposes the exit() and destroy() API.
+         * Called from within setState, exit() is called on the current state.
+         * Here we provide an implementation that most states will share.
          */
         exit(toState) {
           const
-            managers = this.map.managers,
-            manager = managers[this.getName()];
-          return manager.exit().then(() => {
-            manager.destroy(); 
-            delete managers[this.getName()];
+            mediators = this.map.mediators,
+            mediator = mediators[this.getName()];
+          return mediator.exit().then(() => {
+            mediator.destroy(); 
+            delete mediators[this.getName()];
             return true;
           });
         },
@@ -87,6 +85,16 @@
          * as the current state.
          */
         enter(data) { },
+        
+        /*
+         * Called by the onResize() method, delegates liquifying behavior
+         * to the state. Defaults to liquifying the feature mediator associated
+         * with the current state. However, states that have multiple features 
+         * open at once can override this behavior.
+         */
+        liquify() {
+          map.mediators[name].liquify();
+        },
         
         getName() { return name; },
       };
@@ -108,7 +116,7 @@
           tickerHandler = createjs.Ticker.on('tick', app.update);
           if(_debug) console.log(`lobby safely setup app.update to handle tick`);
           
-          return createAndRunEnterForManager(app, this.map, 'lobby', data);
+          return createAndRunEnterForMediator(app, this.map, 'lobby', data);
         },
         play(data) {
           /*
@@ -129,7 +137,7 @@
            * automatically transition to the playing state once
            * the initManager is done with its enter sequence.
            */
-          return createAndRunEnterForManager(app, this.map, 'initializing', data)
+          return createAndRunEnterForMediator(app, this.map, 'initializing', data)
             .then(() => this.play(data));
         },
         play(data) {
@@ -146,7 +154,7 @@
            * play() transition method, so that entering to the playing 
            * from the paused state doesn't recreate the game playing view.
            */
-          return createAndRunEnterForManager(app, this.map, 'playing', data)
+          return createAndRunEnterForMediator(app, this.map, 'playing', data)
             .then(() => setState(states.playing, data));
         },
       }),
@@ -159,12 +167,12 @@
         },
         exit(toState) {
           /*
-           * Don't destroy the game view when exiting the playing state, we'll
-           * just shut it down. Both pause and end states will place views on 
-           * top of the playing view. The transition to the end state will call
-           * destroy on the playing view.
+           * Don't destroy the game view/mediator when exiting the playing state, 
+           * we'll just shut it down by calling the mangers's exit() method. Both 
+           * pause and end states will place views on top of the playing view. The 
+           * transition to the end state will call destroy on the playing feature.
            */
-          return Promise.resolve(true);
+          return this.map.mediators[states.playing.getName()].exit();
         },
         pause(data) {
           if(_debug) console.log('playing state calling pause()...');
@@ -173,7 +181,7 @@
         },
         end(data) {
           if(_debug) console.log('playing state calling end()...');
-          return createAndRunEnterForManager(app, this.map, 'end', data)
+          return createAndRunEnterForMediator(app, this.map, 'end', data)
             .then(() => setState(states.end, data));
         },
       }),
@@ -182,16 +190,27 @@
         enter(fromState, data) {
           if(_debug) console.log(`enter paused from ${fromState.getName()}`);
           
-          return createAndRunEnterForManager(app, this.map, 'paused', data);
+          return createAndRunEnterForMediator(app, this.map, 'paused', data);
         },
         play(data) {
           if(_debug) console.log('paused state calling play()...');
-          return setState(states.playing, data);
+          /*
+           * Call enter on the playing mediator here, it is 
+           * not called on enter() of the playing state.
+           */
+          return setState(states.playing, data)
+            .then(() => this.map.mediators[states.playing.getName()].enter());
         },
         end(data) {
           if(_debug) console.log('paused state calling end()...');
-          return createAndRunEnterForManager(app, this.map, 'end', data)
+          return createAndRunEnterForMediator(app, this.map, 'end', data)
             .then(() => setState(states.end, data));
+        },
+        liquify() {
+          const mediators = this.map.mediators;
+          mediators[this._name].liquify();
+          // the playing feature is open, so also liquify the playing mediator //
+          mediators[states.playing.getName()].liquify();
         },
       }),
       
@@ -203,7 +222,7 @@
           
           /* 
            * Let the playing or paused states' end() transition
-           * method create the end manager and view.
+           * method create the end mediator and view.
            */
         },
         lobby(data) {
@@ -218,33 +237,39 @@
           if(_debug) console.log('lobby state calling play()...');
           return destroyPlayingFeatureAndGoToState(this.map, states.initializing, data);
         },
+        liquify() {
+          const mediators = this.map.mediators;
+          mediators[this._name].liquify();
+          // the playing feature is open, so also liquify the playing mediator //
+          mediators[states.playing.getName()].liquify();
+        },
       }),
     };
     
     function destroyPlayingFeatureAndGoToState(map, toState, data) {
       const
         name = states.playing.getName(),
-        playingManager = map.managers[name];
+        playingManager = map.mediators[name];
       return playingManager.exit()
         .then(() => {
           playingManager.destroy(); 
-          delete map.managers[name];
+          delete map.mediators[name];
           return setState(toState, data);
         });
     }
     
-    function createAndRunEnterForManager(app, map, feature, data) {
+    function createAndRunEnterForMediator(app, map, feature, data) {
       const
         factories = map.factories,
-        managers = map.managers,
+        mediators = map.mediators,
         /*
-         * Data is passed to the constructor of the manager: can be used 
+         * Data is passed to the constructor of the mediator: can be used 
          * to make views/features more dynamic as they're constructed.
          */
-        manager = factories[feature].manager(factories[feature].view(app), app, data);
+        mediator = factories[feature].mediator(factories[feature].view(app), app, data);
       
-      managers[feature] = manager;
-      return manager.enter();
+      mediators[feature] = mediator;
+      return mediator.enter();
     }
     
     function setState(toState, data) {
@@ -338,7 +363,18 @@
 
     window.addEventListener('resize', onResize, false);
 
+    let resizeTimer;
     function onResize(event) {
+      /* 
+       * This will basically wait till resizing has stopped
+       * to run liquify on the current feature mediator.
+       */
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        // Run code here, resizing has "stopped": delegate to the state //
+        _state.liquify();
+      }, 250);
+      
       setSize();
       app.update(event);
     }

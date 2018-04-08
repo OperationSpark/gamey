@@ -1,8 +1,5 @@
 /*
  * NOTE: these tests are stateful: can't get beforeEach / afterEach to work!
- * If needed, to reset state at the end of each test, call:
- *    clearHandlers();
- *    app.end();
  */
 
 const
@@ -14,35 +11,35 @@ const
 
 /*
  * gamey() must take a map of factories containing a factory 
- * Function for a view and manager per main app feature.
+ * Function for a view and mediator per main app feature.
  */
 const app = gamey.app({
       // used to hold view factories for the concrete game //
       factories: {
         lobby: {
-          manager: opspark.gamey.manager,
+          mediator: opspark.gamey.mediator,
           view: opspark.gamey.view,
         },
         initializing: {
-          manager: opspark.gamey.manager,
+          mediator: opspark.gamey.mediator,
           view: opspark.gamey.view,
         },
-        // NOTE: concrete view/manager for playing feature in tests //
+        // NOTE: concrete view/mediator for playing feature in tests //
         playing: {
-          manager: opspark.gamey.playingManager,
+          mediator: opspark.gamey.playingMediator,
           view: opspark.gamey.playing,
         },
         paused: {
-          manager: opspark.gamey.manager,
+          mediator: opspark.gamey.mediator,
           view: opspark.gamey.view,
         },
         end: {
-          manager: opspark.gamey.manager,
+          mediator: opspark.gamey.mediator,
           view: opspark.gamey.view,
         }
       },
-      // used by gamey to hold references to instances of managers //
-      managers: {
+      // used by gamey to hold references to instances of mediators //
+      mediators: {
       },
     });
 
@@ -104,9 +101,9 @@ describe('gamey', function () {
       
       /*
        * Each transition method can take a data object, which will be passed
-       * to the manager's factory method on its creation. This allows for 
+       * to the mediator's factory method on its creation. This allows for 
        * flexible views, etc. In this case, we pass {name: 'lobby'}, which 
-       * allows a general manager to set this text on a general view.
+       * allows a general mediator to set this text on a general view.
        */
       app.lobby({name: 'lobby'})
         .then(() => {
@@ -143,7 +140,7 @@ describe('gamey', function () {
       setTimeout(() => {
         /*
          * NOTE: we're not passing data to the play() transition method.
-         * In these tests, there's a concrete playing view and manager.
+         * In these tests, there's a concrete playing view and mediator.
          */
         app.play()
         .then(() => {
