@@ -120,7 +120,7 @@ Each of the game features must implement a view with a specific API. Here's a te
 // lobby-view.js //
 (function(opspark, createjs, _) {
 
-  // create a namespace for your view view //
+  // create a namespace for your view //
   _.set(opspark, 'playa.lobby',
     /**
      * Creates and returns the view.
@@ -148,7 +148,7 @@ Each of the game features must implement a view with a specific API. Here's a te
        */
       function render() {
         
-        // provide default positions here //
+        // provide default positions relative to canvas here //
 
       }
 
@@ -161,14 +161,14 @@ Each of the game features must implement a view with a specific API. Here's a te
       asset.on('added', onAdded);
 
       function onAdded() {
-        if (game.getDebug()) console.log('end view added to stage');
+        if (game.getDebug()) console.log('lobby view added to stage');
         asset.off('added', onAdded);
         render();
       }
 
       /*
-       * Return the view API: It MUST expose the asset, the render method, and 
-       * the liquify method. However, any other child components or API needed 
+       * Return the view API: It MUST expose the asset, the render() method, and 
+       * the liquify() method. However, any other child components or API needed 
        * to control this view can be exposed.
        */
       return {
@@ -255,5 +255,7 @@ The `playing` state/feature is generally where the most magic happens. You can c
 Managers can expose an `update()` method, used to modify game assets on `tick`. These managers can then be added to the gamey app via `game.addUpdateable(myManager);`. This will cause gamey to call `myManager.update()` on each `tick` event, generally 60 times per second.
 
 Use `game.removeUpdateable(myManager);` to stop the manager from updating its assets. You'll want to do this, say, when transitioning to the `paused` or `end` states.
+
+### Game Over
 
 The `playing` state will eventually, based on your game rules, decide when it's game over by called `game.end();`
