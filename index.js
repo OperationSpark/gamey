@@ -325,16 +325,16 @@
         pause(data) { return _state.pause(data); },
         end(data) { return _state.end(data); },
 
-        addUpdateable: function(updateable) {
-          updateables.push(updateable);
+        addUpdateable: function(...addedUpdateables) {
+          updateables.push(...addedUpdateables);
           return app;
         },
 
-        removeUpdateable: function(updateable) {
-          const index = updateables.indexOf(updateable);
-          if (index > -1) {
-            updateables.splice(index, 1);
-          }
+        removeUpdateable: function(...removedUpdateables) {
+          _.each(removedUpdateables, updateable => {
+            const index = updateables.indexOf(updateable);
+            if (index > -1) updateables.splice(index, 1);
+          });
           return app;
         },
 
