@@ -345,7 +345,7 @@
         update: function(event) {
           stage.update();
           for (var i = 0; i < updateables.length; i++) {
-            updateables[i].update();
+            updateables[i].update(event);
           }
         },
         
