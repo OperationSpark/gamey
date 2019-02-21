@@ -2,8 +2,8 @@
   // use the opspark namespace //
   const opspark = _.set(window, 'opspark', window.opspark || {}).opspark;
   
-  // create the gamey namespace //
-  _.set(opspark, 'gamey.app', 
+  // create the gamey.make namespace //
+  _.set(opspark, 'gamey.make', 
   /**
    * Creates and returns the gamey app.
    */ 

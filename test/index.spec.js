@@ -10,10 +10,10 @@ const
   gamey = opspark.gamey;
 
 /*
- * gamey() must take a map of factories containing a factory 
- * Function for a view and mediator per main app feature.
+ * gamey.make() must take a map of modules containing 
+ * a view and mediator per main app feature.
  */
-const app = gamey.app({
+const app = gamey.make({
       // used to hold view factories for the concrete game //
       factories: {
         lobby: {
